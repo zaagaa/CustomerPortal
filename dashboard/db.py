@@ -10,3 +10,14 @@ def get_customer_by_mobile(mobile):
         columns = [col[0] for col in cursor.description]
         data = dict(zip(columns, row))
         return DynamicCustomer(**data)
+
+
+def get_customer_by_id(customer_id):
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM customer_customer WHERE id = %s", [customer_id])
+        row = cursor.fetchone()
+        if not row:
+            return None
+        columns = [col[0] for col in cursor.description]
+        data = dict(zip(columns, row))
+        return DynamicCustomer(**data)
