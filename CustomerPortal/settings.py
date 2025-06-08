@@ -47,7 +47,7 @@ print(f"📡 Using {INSTANCE_TYPE.upper()} database mode.")
 # === Quick-start development settings ===
 SECRET_KEY = 'django-insecure-n31&)l*b0w!(_xqm=zb372v9w61)!76i=*w5_o0dpn*1r&fz+j'
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # === Application definition ===
