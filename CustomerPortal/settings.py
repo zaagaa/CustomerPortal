@@ -123,3 +123,8 @@ STATIC_URL = 'static/'
 
 # === Default primary key field type ===
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://customerportal-production.up.railway.app",
+]

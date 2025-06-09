@@ -119,6 +119,14 @@
 {% endblock %}
 
 {% block footer %}
+
+
+<style>
+.ui-datepicker-calendar {
+    display: none;
+}
+</style>
+
 <script>
 $(function () {
     $("#month-select").datepicker({
@@ -130,17 +138,12 @@ $(function () {
             const month = $("#ui-datepicker-div .ui-datepicker-month :selected").val();
             const year = $("#ui-datepicker-div .ui-datepicker-year :selected").val();
             $(this).val(year + '-' + ('0' + (parseInt(month) + 1)).slice(-2)).change();
+        },
+        beforeShow: function(input, inst) {
+            $(".ui-datepicker-calendar").hide();
         }
-    });
-
-    $("#month-select").focus(function () {
-        $(".ui-datepicker-calendar").hide();
-        $("#ui-datepicker-div").position({
-            my: "left top",
-            at: "left bottom",
-            of: $(this)
-        });
     });
 });
 </script>
 {% endblock %}
+

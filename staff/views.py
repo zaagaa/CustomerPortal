@@ -73,7 +73,7 @@ def staff_salary(staff_id, month=None):
 
     gross_salary = round(total_working_days * full_day_salary, 2)
     credit_total = Staff_Credit.objects.filter(staff=staff, date__range=[start_date, end_date]).aggregate(total=Sum("amount"))["total"] or 0
-    net_salary = round(gross_salary - credit_total, 2)
+    net_salary = round(gross_salary - float(credit_total), 2)
 
     return {
         "gross_salary": gross_salary,
