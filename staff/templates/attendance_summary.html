@@ -1,0 +1,146 @@
+{% extends "layouts/staff_base.html" %}
+{% load custom_filters %}
+{% block title %}Attendance Summary{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">My Attendance Summary</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" id="attendance-form" class="row g-3 mb-3">
+            <div class="col-md-4">
+                <label for="month-select" class="form-label">Select Month:</label>
+                <input type="text" name="month" id="month-select" class="form-control" value="{{ month_input }}">
+            </div>
+            <div class="col-md-2 align-self-end">
+                <button type="submit" class="btn btn-primary w-100">SHOW</button>
+            </div>
+        </form>
+
+        <h6 class="mb-3"><strong>Name:</strong> {{ staff.staff_name }}</h6>
+
+        <div class="table-responsive mb-4">
+            <table class="table table-bordered table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>In Time</th>
+                        <th>Out Time</th>
+                        <th>Status</th>
+                        <th>Salary</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in records %}
+                        <tr class="{% if row.status == 'ABSENT' %}table-danger{% elif row.status == 'H' %}table-warning{% endif %}">
+                            <td>{{ row.date|date:"d M Y (D)" }}</td>
+                            <td>{{ row.in_time|default:"ABSENT" }}</td>
+                            <td>{{ row.out_time|default:"" }}</td>
+                            <td>
+                                {% if row.status == "F" %}
+                                    <span class="badge bg-success">Full Day</span>
+                                {% elif row.status == "H" %}
+                                    <span class="badge bg-warning text-dark">Half Day</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Absent</span>
+                                {% endif %}
+                            </td>
+                            <td>₹{{ row.amount|floatformat:2|intcomma_indian }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5" class="text-center">No attendance records</td></tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="text-end fw-bold">Total</td>
+                        <td class="fw-bold">₹{{ gross_salary|floatformat:2|intcomma_indian }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="card">
+            <div class="card-body p-3">
+                <h6 class="fw-bold mb-3">Salary Summary</h6>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <th>Monthly Salary</th>
+                            <td class="text-end">₹{{ salary_value|floatformat:2|intcomma_indian }}</td>
+                        </tr>
+                        <tr>
+                            <th>Working Days ({{ working_days }})</th>
+                            <td class="text-end">₹{{ gross_salary|floatformat:2|intcomma_indian }}</td>
+                        </tr>
+                        <tr>
+                            <th>Credit</th>
+                            <td class="text-end text-danger">₹{{ credit_total|floatformat:2|intcomma_indian }}</td>
+                        </tr>
+                        <tr class="table-success fw-bold">
+                            <th>Net Salary</th>
+                            <td class="text-end text-success">₹{{ net_salary|floatformat:2|intcomma_indian }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <hr class="my-3">
+                <h6 class="fw-bold mb-3">Credit Details</h6>
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Note</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in credits %}
+                            <tr>
+                                <td>#{{ c.id }}</td>
+                                <td>{{ c.date|date:"d/m/Y" }}</td>
+                                <td style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                                    title="{{ c.notes|default:"-" }}">
+                                    {{ c.notes|default:"-" }}
+                                </td>
+                                <td class="text-end">₹{{ c.amount|floatformat:2|intcomma_indian }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4" class="text-center">No credit entries</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script>
+$(function () {
+    $("#month-select").datepicker({
+        changeMonth: true,
+        changeYear: true,
+        showButtonPanel: true,
+        dateFormat: 'yy-mm',
+        onClose: function(dateText, inst) {
+            const month = $("#ui-datepicker-div .ui-datepicker-month :selected").val();
+            const year = $("#ui-datepicker-div .ui-datepicker-year :selected").val();
+            $(this).val(year + '-' + ('0' + (parseInt(month) + 1)).slice(-2)).change();
+        }
+    });
+
+    $("#month-select").focus(function () {
+        $(".ui-datepicker-calendar").hide();
+        $("#ui-datepicker-div").position({
+            my: "left top",
+            at: "left bottom",
+            of: $(this)
+        });
+    });
+});
+</script>
+{% endblock %}

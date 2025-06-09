@@ -1,0 +1,271 @@
+{% extends "layouts/staff_base.html" %}
+{% load custom_filters %}
+{% block title %}Book Leave{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="alert alert-info mt-3">
+    Eligible to Take Leave: <strong>{{ monthly_remaining_units|floatformat:1 }}</strong>
+</div>
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Request Leave</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {{ form.leave_date.label_tag }}
+{% if selected_date %}
+  <input type="date" name="leave_date" id="id_leave_date" class="form-control"
+         value="{{ selected_date|date:'Y-m-d' }}">
+{% else %}
+  <input type="date" name="leave_date" id="id_leave_date" class="form-control"
+         value="{{ today|date:'Y-m-d' }}">
+{% endif %}
+
+                    </div>
+                    <div class="mb-3">
+                        <label>Leave Type</label><br>
+                        <div class="form-check form-check-inline">
+                          <input class="form-check-input" type="radio" name="leave_type" id="full" value="FULL" checked>
+                          <label class="form-check-label" for="full">Full Day</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input class="form-check-input" type="radio" name="leave_type" id="morning" value="HALF_MORNING">
+                          <label class="form-check-label" for="morning">Morning</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input class="form-check-input" type="radio" name="leave_type" id="afternoon" value="HALF_AFTERNOON">
+                          <label class="form-check-label" for="afternoon">Afternoon</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        {{ form.reason.label_tag }}
+                        {{ form.reason }}
+                    </div>
+                    <button type="submit" class="btn btn-success">Submit</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="leave-summary-widget" class="mt-4 d-none">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">Leave Summary for Selected Date</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Available Slots:</strong> <span id="slot-count">Loading...</span></p>
+                    <ul class="list-group" id="leave-booked-list"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <span>Leave Calendar</span>
+                <select id="month-select" class="form-select form-select-sm w-auto"></select>
+            </div>
+            <div class="card-body">
+                <div id="calendar" class="d-flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">My Leave History</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if history %}
+                <table class="table table-sm table-striped mb-0">
+                    <thead>
+                        <tr><th>Date</th><th>Status</th><th>Type</th><th>Reason</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for leave in history %}
+                        <tr>
+                            <td>{{ leave.leave_date }}</td>
+                            <td>
+                              <span class="badge
+                                {% if leave.status == 'APPROVED' %}bg-success
+                                {% elif leave.status == 'WAITING' %}bg-warning text-dark
+                                {% elif leave.status == 'REJECTED' %}bg-danger
+                                {% else %}bg-secondary
+                                {% endif %}">
+                                {{ leave.status }}
+                              </span>
+                            </td>
+                            <td>{{ leave.leave_type|title|replace_underscore }}</td>
+                            <td>{{ leave.reason|default:"-" }}</td>
+                            <td>
+                            {% if leave.leave_date > today %}
+                                <a href="{% url 'delete_leave' leave.id %}" class="btn btn-danger btn-sm"
+                                   onclick="return confirm('Are you sure you want to delete this leave?');">
+                                   Delete
+                                </a>
+                            {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                    <div class="p-3 text-muted">No leave records found.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}
+
+{% block footer %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const monthSelect = document.getElementById('month-select');
+    const calendar = document.getElementById('calendar');
+    const dateInput = document.getElementById('id_leave_date');
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    // 1. Populate month dropdown
+    function populateMonthOptions() {
+        for (let offset = 0; offset < 3; offset++) {
+            const d = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+            const value = d.toISOString().slice(0, 7); // YYYY-MM
+            const label = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = label;
+            if (offset === 0) option.selected = true;
+            monthSelect.appendChild(option);
+        }
+    }
+
+    // 2. Render calendar
+    function renderCalendar(year, month, dayStatus) {
+        calendar.innerHTML = '';
+        const totalDays = new Date(year, month, 0).getDate();
+
+        for (let day = 1; day <= totalDays; day++) {
+            const selectedDate = new Date(year, month - 1, day);
+            const isPast = selectedDate < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+            const status = dayStatus[day]?.status || 'available';
+            const color = status === 'full' ? 'danger' : 'success';
+
+            const cell = document.createElement('div');
+            cell.className = `p-2 border rounded text-center text-white`;
+            cell.style.width = '40px';
+            cell.style.cursor = isPast ? 'not-allowed' : 'pointer';
+            cell.textContent = day;
+
+            if (isPast) {
+                cell.classList.add('bg-secondary', 'opacity-50');
+            } else {
+                cell.classList.add(`bg-${color}`);
+                cell.dataset.date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                cell.addEventListener('click', function () {
+                    if (dateInput) {
+                        dateInput.value = this.dataset.date;
+                        dateInput.dispatchEvent(new Event('change'));
+                    }
+                });
+            }
+
+            calendar.appendChild(cell);
+        }
+    }
+
+    // 3. Fetch calendar data
+    function fetchCalendarData(monthStr) {
+        const date = new Date(monthStr + "-01");
+        date.setMonth(date.getMonth() + 1);
+        const nextMonthStr = date.toISOString().slice(0, 7);
+
+        fetch(`{% url 'calendar_leave_status' %}?month=${nextMonthStr}`)
+            .then(res => res.json())
+            .then(data => {
+                const year = parseInt(data.year);
+                const month = parseInt(data.month); // 1-based
+                renderCalendar(year, month, data.days);
+            });
+    }
+
+    // 4. Fetch leave summary for selected date
+    function fetchLeaveSummary(date) {
+        const summaryWidget = document.getElementById('leave-summary-widget');
+        const slotCount = document.getElementById('slot-count');
+        const bookedList = document.getElementById('leave-booked-list');
+
+        fetch(`{% url 'leave_summary' %}?date=${encodeURIComponent(date)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    summaryWidget.classList.remove('d-none');
+                    slotCount.textContent = data.available_slots || 'No slots available';
+                    bookedList.innerHTML = '';
+
+                    const booked = data.booked || [];
+                    if (booked.length === 0) {
+                        bookedList.innerHTML = '<li class="list-group-item text-muted">No bookings yet.</li>';
+                    } else {
+                        booked.forEach(entry => {
+                            const formattedType = entry.type
+                                .toLowerCase()
+                                .replace(/_/g, ' ')
+                                .replace(/\b\w/g, c => c.toUpperCase());
+
+                            const li = document.createElement('li');
+                            li.className = 'list-group-item';
+                            li.textContent = `${entry.name} - ${entry.status} - ${formattedType}`;
+                            bookedList.appendChild(li);
+                        });
+                    }
+                } else {
+                    summaryWidget.classList.add('d-none');
+                    alert(data.message || 'Failed to load leave summary.');
+                }
+            })
+            .catch(error => {
+                summaryWidget.classList.add('d-none');
+                console.error("Leave summary fetch error:", error);
+                alert("Something went wrong while fetching leave summary.");
+            });
+    }
+
+    // 5. Bind change event to date input
+    if (dateInput) {
+        dateInput.addEventListener('change', function () {
+            const date = this.value;
+            if (date) fetchLeaveSummary(date);
+        });
+
+        // Auto-fetch summary on load if date already filled (like after form submission)
+        if (dateInput.value) {
+            fetchLeaveSummary(dateInput.value);
+        } else {
+            // Optionally prefill today's date
+             dateInput.value = todayStr;
+             fetchLeaveSummary(todayStr);
+        }
+    }
+
+    // 6. Initialize calendar
+    populateMonthOptions();
+    fetchCalendarData(monthSelect.value);
+
+    monthSelect.addEventListener('change', function () {
+        fetchCalendarData(this.value);
+    });
+});
+</script>
+
+
+{% endblock footer %}
