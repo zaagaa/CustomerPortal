@@ -1,20 +1,26 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-
-import random
 from django.db import connection
+from .models import Customer
 from dashboard.sms import send_otp_sms
 from staff.utils import get_staff_by_mobile
-from .models import Customer
+import random
+from dashboard.models import Point_Entry
 
+# === Utility Functions ===
 
 def get_customer_by_id(customer_id):
-    customer=Customer.objects.get(id=customer_id)
-    return customer is not None
+    try:
+        return Customer.objects.get(id=customer_id)
+    except Customer.DoesNotExist:
+        return None
+
 
 def get_customer_by_mobile(mobile):
-    customer=Customer.objects.get(mobile=mobile)
-    return customer is not None
+    try:
+        return Customer.objects.get(mobile=mobile)
+    except Customer.DoesNotExist:
+        return None
 
 
 def is_staff_user(request):
@@ -23,6 +29,15 @@ def is_staff_user(request):
         return False
     staff_record = get_staff_by_mobile(mobile)
     return staff_record is not None
+
+
+def get_point_entries(customer_id):
+    return Point_Entry.objects.filter(customer_id=customer_id) \
+        .order_by('-entry_date')[:10] \
+        .values('id', 'entry_date', 'point', 'balance', 'description')
+
+
+# === View Functions ===
 
 def customer_login(request):
     if request.method == 'POST':
@@ -48,25 +63,32 @@ def customer_login(request):
 def verify_otp(request):
     if request.method == 'POST':
         input_otp = request.POST.get('otp')
-        if input_otp == request.session.get('pending_otp'):
+        session_otp = request.session.get('pending_otp')
+
+        if input_otp == session_otp:
             response = redirect('dashboard_home')
 
-            # Set login info in session
+            # Promote temporary session values
             customer_id = request.session.pop('pending_customer_id')
             customer_mobile = request.session.pop('pending_customer_mobile')
+            request.session.pop('pending_otp', None)
 
+            # Set login session
             request.session['customer_id'] = customer_id
             request.session['customer_mobile'] = customer_mobile
 
-            # Set persistent cookie (expires in 30 days)
-            response.set_cookie('customer_id', customer_id, max_age=60*60*24*3000)
-            response.set_cookie('customer_mobile', customer_mobile, max_age=60 * 60 * 24 * 3000)
+            # Set persistent cookies (valid for ~3 years)
+            max_age = 60 * 60 * 24 * 3000
+            response.set_cookie('customer_id', customer_id, max_age=max_age)
+            response.set_cookie('customer_mobile', customer_mobile, max_age=max_age)
+
             return response
 
         messages.error(request, 'Invalid OTP')
         return redirect('verify_otp')
 
     return render(request, 'verify_otp.html')
+
 
 def customer_logout(request):
     response = redirect('customer_login')
@@ -75,33 +97,22 @@ def customer_logout(request):
     response.delete_cookie('customer_mobile')
     return response
 
-def get_point_entries(customer_id):
-    with connection.cursor() as cursor:
-        cursor.execute("""
-            SELECT id, entry_date, point, balance, description
-            FROM invoice_point_entry
-            WHERE customer_id = %s
-            ORDER BY entry_date DESC
-            LIMIT 10
-        """, [customer_id])
-        rows = cursor.fetchall()
-        columns = [col[0] for col in cursor.description]
-        return [dict(zip(columns, row)) for row in rows]
-
-
 
 def home(request):
     customer_id = request.session.get('customer_id')
 
-    # Try to restore from cookie if session expired
+    # Restore from cookie if session expired
     if not customer_id and 'customer_id' in request.COOKIES:
-        request.session['customer_id'] = request.COOKIES['customer_id']
         customer_id = request.COOKIES['customer_id']
+        request.session['customer_id'] = customer_id
 
     if not customer_id:
         return redirect('customer_login')
 
     customer = get_customer_by_id(customer_id)
+    if not customer:
+        return redirect('customer_login')
+
     point_entries = get_point_entries(customer_id)
     is_staff = is_staff_user(request)
 
@@ -110,8 +121,4 @@ def home(request):
         "point_entries": point_entries,
         "is_staff": is_staff
     }
-
     return render(request, 'home.html', context)
-
-
-
