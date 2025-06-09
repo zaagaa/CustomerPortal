@@ -3,61 +3,77 @@
 <html>
 <head>
     <title>Customer Dashboard</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card-header h4, .card-header h5 {
+            font-size: 1.25rem;
+        }
+        .table td, .table th {
+            font-size: 0.9rem;
+        }
+        @media (max-width: 576px) {
+            .btn-group-mobile {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <div class="card shadow-lg">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h4 class="mb-0">Welcome, {{ customer.customer_name|default:""  }}</h4>
-                <div>
-{% if is_staff %}
-    <a href="{% url 'staff_profile' %}" class="btn btn-warning btn-sm me-2">Staff Panel</a>
-{% endif %}
-                    <a href="{% url 'customer_logout' %}" class="btn btn-sm btn-light">Logout</a>
-                </div>
-            </div>
-            <div class="card-body">
-                <p><strong>Mobile:</strong> {{ customer.mobile }}</p>
-                <p><strong>Points:</strong> {{ customer.point|floatformat:2|default:"Not available" }}</p>
-                <p><strong>Address:</strong> {{ customer.address|default:"Not available" }}</p>
-                <p class="text-muted">This is your customer dashboard. More features coming soon!</p>
+<div class="container py-4 px-3">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex flex-wrap justify-content-between align-items-center">
+            <h4 class="mb-2 mb-sm-0">Welcome, {{ customer.customer_name|default:"" }}</h4>
+            <div class="d-flex btn-group-mobile">
+                {% if is_staff %}
+                    <a href="{% url 'staff_profile' %}" class="btn btn-warning btn-sm me-2">Staff Panel</a>
+                {% endif %}
+                <a href="{% url 'customer_logout' %}" class="btn btn-light btn-sm">Logout</a>
             </div>
         </div>
+        <div class="card-body">
+            <p><strong>Mobile:</strong> {{ customer.mobile }}</p>
+            <p><strong>Points:</strong> {{ customer.point|floatformat:2|default:"Not available" }}</p>
+            <p><strong>Address:</strong> {{ customer.address|default:"Not available" }}</p>
+            <p class="text-muted">This is your customer dashboard. More features coming soon!</p>
+        </div>
+    </div>
 
-        <div class="card shadow-lg mt-4">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0">Point Entry History</h5>
-            </div>
-            <div class="card-body p-0">
-                {% if point_entries %}
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Point Entry History</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if point_entries %}
                 <div class="table-responsive">
                     <table class="table table-striped table-hover mb-0">
                         <thead class="table-light">
-                            <tr>
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th class="text-end">Points</th>
-                                <th class="text-end">Balance</th>
-                            </tr>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th class="text-end">Points</th>
+                            <th class="text-end">Balance</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            {% for entry in point_entries %}
+                        {% for entry in point_entries %}
                             <tr>
                                 <td>{{ entry.entry_date|date:"d/m/Y g:i A" }}</td>
                                 <td>{{ entry.description|default:"-" }}</td>
                                 <td class="text-end">{{ entry.point|floatformat:2 }}</td>
                                 <td class="text-end">{{ entry.balance|floatformat:2 }}</td>
                             </tr>
-                            {% endfor %}
+                        {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                {% else %}
-                    <div class="p-3 text-muted">No point entries available.</div>
-                {% endif %}
-            </div>
+            {% else %}
+                <div class="p-3 text-muted">No point entries available.</div>
+            {% endif %}
         </div>
     </div>
+</div>
 </body>
 </html>
