@@ -119,7 +119,7 @@ USE_TZ = True
 
 
 # === Static files (CSS, JS, Images) ===
-STATIC_URL = 'static/'
+
 
 # === Default primary key field type ===
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -129,3 +129,8 @@ CSRF_TRUSTED_ORIGINS = [
     "https://customerportal-production.up.railway.app",
 'https://www.kurinjishopping.com',
 ]
+
+
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / "static"]  # If you use a static folder for dev
+STATIC_ROOT = BASE_DIR / "staticfiles"   # Required for Railway

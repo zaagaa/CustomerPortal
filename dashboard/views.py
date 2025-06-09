@@ -1,10 +1,21 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from dashboard.db import get_customer_by_mobile, get_customer_by_id
+
 import random
 from django.db import connection
 from dashboard.sms import send_otp_sms
 from staff.utils import get_staff_by_mobile
+from .models import Customer
+
+
+def get_customer_by_id(customer_id):
+    customer=Customer.objects.get(id=customer_id)
+    return customer is not None
+
+def get_customer_by_mobile(mobile):
+    customer=Customer.objects.get(mobile=mobile)
+    return customer is not None
+
 
 def is_staff_user(request):
     mobile = request.session.get('customer_mobile') or request.COOKIES.get('customer_mobile')
