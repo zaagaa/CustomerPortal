@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'dashboard',
+'staff'
 ]
 
 MIDDLEWARE = [
@@ -77,6 +78,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [],  # Add custom template paths here if needed
+        'DIRS': [BASE_DIR / 'staff' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

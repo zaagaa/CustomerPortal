@@ -4,7 +4,14 @@ from dashboard.db import get_customer_by_mobile, get_customer_by_id
 import random
 from django.db import connection
 from dashboard.sms import send_otp_sms
+from staff.utils import get_staff_by_mobile
 
+def is_staff_user(request):
+    mobile = request.session.get('customer_mobile') or request.COOKIES.get('customer_mobile')
+    if not mobile:
+        return False
+    staff_record = get_staff_by_mobile(mobile)
+    return staff_record is not None
 
 def customer_login(request):
     if request.method == 'POST':
@@ -42,6 +49,7 @@ def verify_otp(request):
 
             # Set persistent cookie (expires in 30 days)
             response.set_cookie('customer_id', customer_id, max_age=60*60*24*3000)
+            response.set_cookie('customer_mobile', customer_mobile, max_age=60 * 60 * 24 * 3000)
             return response
 
         messages.error(request, 'Invalid OTP')
@@ -53,6 +61,7 @@ def customer_logout(request):
     response = redirect('customer_login')
     request.session.flush()
     response.delete_cookie('customer_id')
+    response.delete_cookie('customer_mobile')
     return response
 
 def get_point_entries(customer_id):
@@ -83,10 +92,12 @@ def home(request):
 
     customer = get_customer_by_id(customer_id)
     point_entries = get_point_entries(customer_id)
+    is_staff = is_staff_user(request)
 
     context = {
         "customer": customer,
-        "point_entries": point_entries
+        "point_entries": point_entries,
+        "is_staff": is_staff
     }
 
     return render(request, 'home.html', context)
