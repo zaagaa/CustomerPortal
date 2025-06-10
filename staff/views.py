@@ -25,7 +25,7 @@ def get_ist_time_from_unix(ts):
 
 # Constants
 MAX_MONTHLY_UNITS_PER_USER = 4.0
-MAX_DAILY_UNITS = 1
+MAX_DAILY_UNITS = 4
 FULL_UNITS = 1
 HALF_UNITS = 0.5
 
