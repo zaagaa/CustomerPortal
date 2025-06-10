@@ -12,6 +12,15 @@ from .models import StaffLeave, Attendance_Entry
 from staff.utils import get_staff_by_mobile, get_staff_name_by_id
 from calendar import monthrange
 from django.utils.dateparse import parse_date
+import pytz
+from datetime import datetime, timezone
+
+IST = pytz.timezone("Asia/Kolkata")
+
+def get_ist_time_from_unix(ts):
+    """Convert Unix timestamp to Asia/Kolkata localized time (Python 3.12 compatible)"""
+    utc_dt = datetime.fromtimestamp(ts, tz=timezone.utc)  # ✅ uses tz param directly
+    return utc_dt.astimezone(IST)
 
 # Constants
 MAX_MONTHLY_UNITS_PER_USER = 4.0
@@ -141,12 +150,15 @@ def attendance_summary(request):
         }
 
         if entry and entry.in_time and entry.out_time:
-            in_time_obj = datetime.fromtimestamp(entry.in_time).time()
-            out_time_obj = datetime.fromtimestamp(entry.out_time).time()
+            in_time_obj = get_ist_time_from_unix(entry.in_time)
+            out_time_obj = get_ist_time_from_unix(entry.out_time)
+
             record["in_time"] = in_time_obj.strftime("%I:%M:%S %p")
             record["out_time"] = out_time_obj.strftime("%I:%M:%S %p")
-            late = in_time_obj > time(10, 0)
-            early = out_time_obj < time(20, 0)
+
+            late = in_time_obj.time() > time(10, 0)
+            early = out_time_obj.time() < time(20, 0)
+
             if late or early:
                 record["status"] = "H"
                 record["amount"] = data["full_day_salary"] / 2
