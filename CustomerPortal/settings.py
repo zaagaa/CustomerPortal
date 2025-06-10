@@ -60,7 +60,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'CustomerPortal',
     'dashboard',
-'staff'
+'staff',
+    'sync'
 ]
 
 MIDDLEWARE = [

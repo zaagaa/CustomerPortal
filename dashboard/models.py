@@ -19,8 +19,8 @@ class Customer(models.Model):
     pincode = models.CharField(max_length=10, null=True, blank=True)
     mobile = models.BigIntegerField(unique=True, null=True, blank=True)
     point = models.FloatField(default=0, null=True, blank=True)
-    # sync_offline = models.BigIntegerField(null=True, blank=True)
-    # sync_online = models.BigIntegerField(null=True, blank=True)
+    sync_offline = models.BigIntegerField(null=True, blank=True)
+    sync_online = models.BigIntegerField(null=True, blank=True)
 
 class Point_Entry(models.Model):
     class Meta:

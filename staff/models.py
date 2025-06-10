@@ -57,7 +57,6 @@ class Staff(models.Model):
     dob = models.DateField(null=True, blank=True)
     discontinued = models.IntegerField(default=0, null=True, blank=True)
     biometric_code = models.CharField(max_length=50, null=True, blank=True)
-    sync_unix = models.BigIntegerField()
     sync_offline = models.BigIntegerField(null=True, blank=True)
     sync_online = models.BigIntegerField(null=True, blank=True)
 
