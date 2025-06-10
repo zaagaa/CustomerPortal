@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.utils import timezone
+
 from django.http import JsonResponse
 from django.contrib import messages
 from datetime import date
@@ -12,14 +12,15 @@ from .models import StaffLeave, Attendance_Entry
 from staff.utils import get_staff_by_mobile, get_staff_name_by_id
 from calendar import monthrange
 from django.utils.dateparse import parse_date
-from datetime import datetime, timezone
+from datetime import datetime, timezone as dt_timezone  # rename to avoid conflict
+from django.utils import timezone
 import pytz
 
 IST = pytz.timezone("Asia/Kolkata")
 
 def get_ist_time_from_unix(ts):
-    """Convert Unix timestamp to Asia/Kolkata localized time"""
-    utc_dt = datetime.fromtimestamp(ts, tz=timezone.utc)  # ✅ use datetime.timezone.utc
+    """Convert Unix timestamp to Asia/Kolkata localized time (safe for Django 5.2)"""
+    utc_dt = datetime.fromtimestamp(ts, tz=dt_timezone.utc)  # ✅ use renamed dt_timezone
     return utc_dt.astimezone(IST)
 
 # Constants
