@@ -12,14 +12,14 @@ from .models import StaffLeave, Attendance_Entry
 from staff.utils import get_staff_by_mobile, get_staff_name_by_id
 from calendar import monthrange
 from django.utils.dateparse import parse_date
-import pytz
 from datetime import datetime, timezone
+import pytz
 
 IST = pytz.timezone("Asia/Kolkata")
 
 def get_ist_time_from_unix(ts):
-    """Convert Unix timestamp to Asia/Kolkata localized time (Python 3.12 compatible)"""
-    utc_dt = datetime.fromtimestamp(ts, tz=timezone.utc)  # ✅ uses tz param directly
+    """Convert Unix timestamp to Asia/Kolkata localized time"""
+    utc_dt = datetime.fromtimestamp(ts, tz=timezone.utc)  # ✅ use datetime.timezone.utc
     return utc_dt.astimezone(IST)
 
 # Constants
