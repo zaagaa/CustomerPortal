@@ -7,6 +7,7 @@ from django.contrib import messages
 from datetime import date
 import uuid
 
+from dashboard.models import Setting
 from staff.forms import StaffLeaveForm
 from staff.models import StaffLeave
 from staff.utils import get_staff_by_mobile, get_staff_name_by_id
@@ -17,16 +18,18 @@ from django.utils import timezone
 
 
 
+
+
 # Constants
-MAX_MONTHLY_UNITS_PER_USER = 4.0
-MAX_DAILY_UNITS = 4
-FULL_UNITS = 1
-HALF_UNITS = 0.5
+MAX_MONTHLY_LEAVE_PER_USER = float(Setting.objects.filter(setting='monthly_leave_per_staff').values_list('value', flat=True).first() or 0)
+MAX_DAILY_LEAVE = float(Setting.objects.filter(setting='daily_leave_all_staff').values_list('value', flat=True).first() or 0)
+FULL_LEAVE = 1
+HALF_LEAVE = 0.5
 
 unit_map = {
-    'FULL': FULL_UNITS,
-    'HALF_MORNING': HALF_UNITS,
-    'HALF_AFTERNOON': HALF_UNITS,
+    'FULL': FULL_LEAVE,
+    'HALF_MORNING': HALF_LEAVE,
+    'HALF_AFTERNOON': HALF_LEAVE,
 }
 
 
@@ -48,7 +51,7 @@ def calendar_leave_status(request):
         for leave in day_leaves:
             total_units += unit_map.get(leave.leave_type, 0)
 
-        status = "full" if total_units >= MAX_DAILY_UNITS else "available"
+        status = "full" if total_units >= MAX_DAILY_LEAVE else "available"
         status_by_date[day] = {"status": status}
 
     return JsonResponse({'year': year, 'month': month, 'days': status_by_date})
@@ -74,7 +77,7 @@ def delete_leave(request, leave_id):
 
     same_day_leaves = StaffLeave.objects.filter(leave_date=leave.leave_date).order_by('created_at')
     approved_count = sum(unit_map.get(l.leave_type, 0) for l in same_day_leaves.filter(status='APPROVED'))
-    if approved_count < MAX_DAILY_UNITS:
+    if approved_count < MAX_DAILY_LEAVE:
         waiting = same_day_leaves.filter(status='WAITING').first()
         if waiting:
             waiting.status = 'APPROVED'
@@ -101,23 +104,23 @@ def get_leave_summary(request):
     for leave in leaves:
         lt = leave.leave_type
         if lt == 'FULL':
-            slot_count[lt] += FULL_UNITS
+            slot_count[lt] += FULL_LEAVE
         else:
-            slot_count[lt] += HALF_UNITS
+            slot_count[lt] += HALF_LEAVE
 
 
         total_units += unit_map.get(lt, 0)
 
-    available_units = MAX_DAILY_UNITS - total_units
+    available_units = MAX_DAILY_LEAVE - total_units
     slots = []
 
-    if available_units >= MAX_DAILY_UNITS:
-        if slot_count['FULL'] < (MAX_DAILY_UNITS):
+    if available_units >= MAX_DAILY_LEAVE:
+        if slot_count['FULL'] < (MAX_DAILY_LEAVE):
             slots.append("Full Day")
-    if available_units >= HALF_UNITS:
-        if slot_count['HALF_MORNING'] < (MAX_DAILY_UNITS * HALF_UNITS):
+    if available_units >= HALF_LEAVE:
+        if slot_count['HALF_MORNING'] < (MAX_DAILY_LEAVE * HALF_LEAVE):
             slots.append("Half Morning")
-        if slot_count['HALF_AFTERNOON'] < (MAX_DAILY_UNITS * HALF_UNITS):
+        if slot_count['HALF_AFTERNOON'] < (MAX_DAILY_LEAVE * HALF_LEAVE):
             slots.append("Half Afternoon")
 
     readable = " + ".join(slots) if slots else "No slots available"
@@ -193,7 +196,7 @@ def book_leave(request):
             monthly_used_units = sum(unit_map.get(l.leave_type, 0) for l in approved_leaves)
             current_unit = unit_map.get(leave.leave_type, 0)
 
-            if monthly_used_units + current_unit > MAX_MONTHLY_UNITS_PER_USER:
+            if monthly_used_units + current_unit > MAX_MONTHLY_LEAVE_PER_USER:
                 messages.warning(request, f"Monthly limit reached ({monthly_used_units:.1f} used).")
                 return redirect(f"{reverse('book_leave')}?{urlencode({'date': leave.leave_date})}")
 
@@ -208,23 +211,23 @@ def book_leave(request):
             for l in leaves:
                 lt = l.leave_type
                 if lt == 'FULL':
-                    slot_count[lt] += FULL_UNITS
+                    slot_count[lt] += FULL_LEAVE
                 else:
-                    slot_count[lt] += HALF_UNITS
+                    slot_count[lt] += HALF_LEAVE
                 total_units += unit_map.get(lt, 0)
 
-            available_units = MAX_DAILY_UNITS - total_units
+            available_units = MAX_DAILY_LEAVE - total_units
 
             # Check if the requested slot is available
             slot_allowed = False
             if leave.leave_type == 'FULL':
-                if available_units >= MAX_DAILY_UNITS and slot_count['FULL'] < MAX_DAILY_UNITS:
+                if available_units >= MAX_DAILY_LEAVE and slot_count['FULL'] < MAX_DAILY_LEAVE:
                     slot_allowed = True
             elif leave.leave_type == 'HALF_MORNING':
-                if available_units >= HALF_UNITS and slot_count['HALF_MORNING'] < (MAX_DAILY_UNITS * HALF_UNITS):
+                if available_units >= HALF_LEAVE and slot_count['HALF_MORNING'] < (MAX_DAILY_LEAVE * HALF_LEAVE):
                     slot_allowed = True
             elif leave.leave_type == 'HALF_AFTERNOON':
-                if available_units >= HALF_UNITS and slot_count['HALF_AFTERNOON'] < (MAX_DAILY_UNITS * HALF_UNITS):
+                if available_units >= HALF_LEAVE and slot_count['HALF_AFTERNOON'] < (MAX_DAILY_LEAVE * HALF_LEAVE):
                     slot_allowed = True
 
             if not slot_allowed:
@@ -249,7 +252,7 @@ def book_leave(request):
         status='APPROVED'
     )
     monthly_used_units = sum(unit_map.get(l.leave_type, 0) for l in approved_leaves)
-    monthly_remaining_units = MAX_MONTHLY_UNITS_PER_USER - monthly_used_units
+    monthly_remaining_units = MAX_MONTHLY_LEAVE_PER_USER - monthly_used_units
 
     history = StaffLeave.objects.filter(staff_id=staff_id).order_by('-leave_date')
 
@@ -262,6 +265,6 @@ def book_leave(request):
         'staff': staff,
         'today': today,
         'monthly_remaining_units': monthly_remaining_units,
-        'max_monthly_units': MAX_MONTHLY_UNITS_PER_USER,
+        'max_monthly_units': MAX_MONTHLY_LEAVE_PER_USER,
         'selected_date': selected_date,
     })

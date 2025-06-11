@@ -33,3 +33,16 @@ class Point_Entry(models.Model):
     point = models.FloatField(default=0, null=True, blank=True)
     balance = models.FloatField(default=0, null=True, blank=True)
     description = models.CharField(max_length=75, null=True, blank=True)
+
+
+class Setting(models.Model):
+    class Meta:
+        db_table = 'setting_setting'
+        managed = False  # External table, do not migrate
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    setting=models.CharField(max_length=100)
+    value=models.CharField(max_length=1000)
+    sync_offline = models.BigIntegerField(null=True, blank=True)
+    sync_online = models.BigIntegerField(null=True, blank=True)
