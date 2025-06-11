@@ -21,54 +21,112 @@
         <h6 class="mb-3"><strong>Name:</strong> {{ staff.staff_name }}</h6>
 
         <div class="table-responsive mb-2">
-            <table class="table table-bordered table-sm">
-                <thead class="table-light">
-                    <tr>
-                        <th>Date</th>
-                        <th>In Time</th>
-                        <th>Out Time</th>
-                        <th>Status</th>
-                        <th>Salary</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in records %}
-                        <tr class="{% if row.status == 'ABSENT' %}table-danger{% elif row.status == 'H' %}table-warning{% endif %}">
-                            <td>{{ row.date|date:"d M Y (D)" }}</td>
-                            <td>{{ row.in_time|default:"ABSENT" }}</td>
-                            <td>{{ row.out_time|default:"" }}</td>
-                            <td>
-                                {% if row.status == "F" %}
-                                    <span class="badge bg-success">Full Day</span>
-                                {% elif row.status == "H" %}
-                                    <span class="badge bg-warning text-dark">Half Day</span>
-                                {% else %}
-                                    <span class="badge bg-danger">Absent</span>
-                                {% endif %}
+    <table class="table table-bordered table-sm align-middle text-nowrap">
+        <thead class="table-light">
+            <tr class="text-center">
+                <th>Date</th>
+                <th>In</th>
+                <th>Out</th>
+                <th>Status</th>
+                <th>Salary</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in records %}
+                <tr class="{% if row.status == 'ABSENT' %}table-danger{% elif row.status == 'H' %}table-warning{% endif %}">
+                    <td class="text-nowrap">{{ row.date|date:"d M" }}</td>
+                    <td class="text-center">{{ row.in_time|default:"—" }}</td>
+                    <td class="text-center">{{ row.out_time|default:"—" }}</td>
+                    <td>
+                        {% if row.status == "HALF - MORNING" %}
+                            <span class="badge bg-warning text-dark mb-1">HALF - MOR</span>
+                        {% elif row.status == "HALF - AFTERNOON" %}
+                            <span class="badge bg-warning text-dark mb-1">HALF - AFT</span>
+                        {% elif row.status == "FULL DAY" %}
+                            <span class="badge bg-success">FULL DAY</span>
+                        {% else %}
+                            <span class="badge bg-danger">{{ row.status }}</span>
+                        {% endif %}
 
-                                {% if staff_leave_incentive_system == "Enable" %}
-{% if row.approved %}
-    <span class="badge bg-secondary text-light">
-    <i class="bi bi-check-circle-fill text-danger me-1"></i>{{row.approved}}
-     </span>
-{% endif %}{% endif %}
+{% if staff_leave_incentive_system == "Enable" and row.approved %}
+    <span class="text-light"
+          data-bs-toggle="tooltip"
+          data-bs-placement="top"
+          title="{{ row.approved }}">
+        <i class="bi bi-check-circle-fill text-success me-1"></i>
+    </span>
+{% endif %}
+                    </td>
+                    <td class="text-end text-nowrap">₹{{ row.amount|floatformat:2|intcomma_indian }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">No attendance records</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="fw-bold text-end">
+                <td colspan="4">Total</td>
+                <td class="text-nowrap">₹{{ gross_salary|floatformat:2|intcomma_indian }}</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
 
 
-                            </td>
-                            <td>₹{{ row.amount|floatformat:2|intcomma_indian }}</td>
-                        </tr>
-                    {% empty %}
-                        <tr><td colspan="5" class="text-center">No attendance records</td></tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="4" class="text-end fw-bold">Total</td>
-                        <td class="fw-bold">₹{{ gross_salary|floatformat:2|intcomma_indian }}</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
+
+<!--        <div class="table-responsive mb-2">-->
+<!--            <table class="table table-bordered table-sm">-->
+<!--                <thead class="table-light">-->
+<!--                    <tr>-->
+<!--                        <th>Date</th>-->
+<!--                        <th>In Time</th>-->
+<!--                        <th>Out Time</th>-->
+<!--                        <th>Status</th>-->
+<!--                        <th>Salary</th>-->
+<!--                    </tr>-->
+<!--                </thead>-->
+<!--                <tbody>-->
+<!--                    {% for row in records %}-->
+<!--                        <tr class="{% if row.status == 'ABSENT' %}table-danger{% elif row.status == 'H' %}table-warning{% endif %}">-->
+<!--                            <td>{{ row.date|date:"d M Y (D)" }}</td>-->
+<!--                            <td>{{ row.in_time|default:"ABSENT" }}</td>-->
+<!--                            <td>{{ row.out_time|default:"" }}</td>-->
+<!--                            <td>-->
+<!--                                  {% if row.status == "HALF - MORNING" %}-->
+<!--                                    <span class="badge bg-warning text-dark">HALF - MORNING</span>-->
+<!--                                  {% elif row.status == "HALF - AFTERNOON" %}-->
+<!--                                    <span class="badge bg-warning text-dark">HALF - AFTERNOON</span>-->
+<!--                                  {% elif row.status == "FULL DAY" %}-->
+<!--                                    <span class="badge bg-success">FULL DAY</span>-->
+<!--                                  {% else %}-->
+<!--                                    <span class="badge bg-danger">{{ row.status }}</span>-->
+<!--                                  {% endif %}-->
+
+<!--                                {% if staff_leave_incentive_system == "Enable" %}-->
+<!--{% if row.approved %}-->
+<!--    <span class="badge bg-secondary text-light">-->
+<!--    <i class="bi bi-check-circle-fill text-danger me-1"></i>{{row.approved}}-->
+<!--     </span>-->
+<!--{% endif %}{% endif %}-->
+
+
+<!--                            </td>-->
+<!--                            <td>₹{{ row.amount|floatformat:2|intcomma_indian }}</td>-->
+<!--                        </tr>-->
+<!--                    {% empty %}-->
+<!--                        <tr><td colspan="5" class="text-center">No attendance records</td></tr>-->
+<!--                    {% endfor %}-->
+<!--                </tbody>-->
+<!--                <tfoot>-->
+<!--                    <tr>-->
+<!--                        <td colspan="4" class="text-end fw-bold">Total</td>-->
+<!--                        <td class="fw-bold">₹{{ gross_salary|floatformat:2|intcomma_indian }}</td>-->
+<!--                    </tr>-->
+<!--                </tfoot>-->
+<!--            </table>-->
+<!--        </div>-->
 
 
         {% if staff_leave_incentive_system == "Enable" %}
@@ -193,5 +251,15 @@ $(function () {
     });
 });
 </script>
+
+<script>
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+
 {% endblock %}
 
