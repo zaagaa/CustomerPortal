@@ -270,8 +270,8 @@ def attendance_summary(request):
             in_time_obj = get_ist_time_from_unix(entry.in_time)
             out_time_obj = get_ist_time_from_unix(entry.out_time)
 
-            record["in_time"] = in_time_obj.strftime("%I:%M:%S %p")
-            record["out_time"] = out_time_obj.strftime("%I:%M:%S %p")
+            record["in_time"] = in_time_obj.strftime("%I:%M %p")
+            record["out_time"] = out_time_obj.strftime("%I:%M %p")
 
             late = in_time_obj.time() > time(10, 0)
             early = out_time_obj.time() < time(20, 0)
