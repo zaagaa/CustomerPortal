@@ -187,7 +187,7 @@ def book_leave(request):
                 return redirect(f"{reverse('book_leave')}?{urlencode({'date': leave.leave_date})}")
 
             # Monthly limit check
-            month_start = leave.leave_date.replace(day=MAX_MONTHLY_LEAVE_PER_USER)
+            month_start = leave.leave_date.replace(day=1)
             month_end = leave.leave_date.replace(day=monthrange(leave.leave_date.year, leave.leave_date.month)[1])
 
             approved_leaves = StaffLeave.objects.filter(
