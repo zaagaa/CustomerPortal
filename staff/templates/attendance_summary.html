@@ -39,9 +39,9 @@
                     <td class="text-center">{{ row.out_time|default:"—" }}</td>
                     <td>
                         {% if row.status == "HALF - MORNING" %}
-                            <span class="badge bg-warning text-dark mb-1">HALF - MOR</span>
+                            <span class="badge bg-warning text-dark mb-1">HALF MR</span>
                         {% elif row.status == "HALF - AFTERNOON" %}
-                            <span class="badge bg-warning text-dark mb-1">HALF - AFT</span>
+                            <span class="badge bg-warning text-dark mb-1">HALF AF</span>
                         {% elif row.status == "FULL DAY" %}
                             <span class="badge bg-success">FULL DAY</span>
                         {% else %}
@@ -53,7 +53,7 @@
           data-bs-toggle="tooltip"
           data-bs-placement="top"
           title="{{ row.approved }}">
-        <i class="bi bi-check-circle-fill text-success me-1"></i>
+        <i class="bi bi-check-circle-fill text-success me-1"></i>APD
     </span>
 {% endif %}
                     </td>

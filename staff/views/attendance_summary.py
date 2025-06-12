@@ -309,12 +309,14 @@ def attendance_summary(request):
                     approved_count += 0.5
 
             else:
-                if record["status"] == 'ABSENT':
-                    unapproved_count += 1
-                elif record["status"] == 'FULL DAY':
-                    pass
-                else:
-                    unapproved_count += 0.5
+                cutoff_date = datetime.strptime("2025-06-12", "%Y-%m-%d").date()
+                if current_date > cutoff_date: #THIS IS TMP CONDITION
+                    if record["status"] == 'ABSENT':
+                        unapproved_count += 1
+                    elif record["status"] == 'FULL DAY':
+                        pass
+                    else:
+                        unapproved_count += 0.5
 
             # Calculate totals
             total_incentive = approved_count * approved_incentive
