@@ -23,6 +23,8 @@ from django.utils import timezone
 # Constants
 MAX_MONTHLY_LEAVE_PER_USER = float(Setting.objects.filter(setting='monthly_leave_per_staff').values_list('value', flat=True).first() or 0)
 MAX_DAILY_LEAVE = float(Setting.objects.filter(setting='daily_leave_all_staff').values_list('value', flat=True).first() or 0)
+LEAVE_BOOKING_AT_A_TIME = float(Setting.objects.filter(setting='staff_leave_booking_at_a_time').values_list('value', flat=True).first() or 0)
+MAX_BOOKING_PERIOD = float(Setting.objects.filter(setting='staff_max_booking_period').values_list('value', flat=True).first() or 0)
 FULL_LEAVE = 1
 HALF_LEAVE = 0.5
 
@@ -168,9 +170,9 @@ def book_leave(request):
                 return redirect(f"{reverse('book_leave')}?{urlencode({'date': leave.leave_date})}")
 
             # Check 1: Future date limit
-            max_booking_date = today + timezone.timedelta(days=60)
+            max_booking_date = today + timezone.timedelta(days=MAX_BOOKING_PERIOD)
             if leave.leave_date > max_booking_date:
-                messages.warning(request, "You can only book up to 60 days in advance.")
+                messages.warning(request, f"You can only book up to {MAX_BOOKING_PERIOD} days in advance.")
                 return redirect(f"{reverse('book_leave')}?{urlencode({'date': leave.leave_date})}")
 
             # Check 2: Limit approved future leaves
@@ -180,12 +182,12 @@ def book_leave(request):
                 status='APPROVED'
             ).count()
 
-            if future_approved_count >= 4:
-                messages.warning(request, "You can only have 4 approved future leaves at a time.")
+            if future_approved_count >= LEAVE_BOOKING_AT_A_TIME:
+                messages.warning(request, f"You can only have {LEAVE_BOOKING_AT_A_TIME} approved future leaves at a time.")
                 return redirect(f"{reverse('book_leave')}?{urlencode({'date': leave.leave_date})}")
 
             # Monthly limit check
-            month_start = leave.leave_date.replace(day=1)
+            month_start = leave.leave_date.replace(day=MAX_MONTHLY_LEAVE_PER_USER)
             month_end = leave.leave_date.replace(day=monthrange(leave.leave_date.year, leave.leave_date.month)[1])
 
             approved_leaves = StaffLeave.objects.filter(
