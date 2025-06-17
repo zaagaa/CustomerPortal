@@ -1,12 +1,17 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db import connection
-from .models import Customer
+from .models import Customer, Invoice, Profile
 from dashboard.sms import send_otp_sms
 from staff.utils import get_staff_by_mobile
 import random
 from dashboard.models import Point_Entry
-
+from django.utils.timezone import localdate
+from django.db import models
+from django.utils.dateparse import parse_date
+from django.db.models import Sum
+from django.db.models.functions import TruncDate
+from django.contrib.auth import get_user_model
 # === Utility Functions ===
 
 def get_customer_by_id(customer_id):
@@ -22,6 +27,17 @@ def get_customer_by_mobile(mobile):
     except Customer.DoesNotExist:
         return None
 
+
+def is_super_user(request):
+    mobile = request.session.get('customer_mobile') or request.COOKIES.get('customer_mobile')
+    if not mobile:
+        return False
+
+    try:
+        profile = Profile.objects.select_related('user').get(mobile=mobile)
+        return profile.user.is_superuser
+    except Profile.DoesNotExist:
+        return False
 
 def is_staff_user(request):
     mobile = request.session.get('customer_mobile') or request.COOKIES.get('customer_mobile')
@@ -101,7 +117,6 @@ def customer_logout(request):
 def home(request):
     customer_id = request.session.get('customer_id')
 
-    # Restore from cookie if session expired
     if not customer_id and 'customer_id' in request.COOKIES:
         customer_id = request.COOKIES['customer_id']
         request.session['customer_id'] = customer_id
@@ -116,9 +131,37 @@ def home(request):
     point_entries = get_point_entries(customer_id)
     is_staff = is_staff_user(request)
 
+
+
+    # Date filter for invoice total
+    date_str = request.GET.get('date')
+    selected_date = parse_date(date_str) if date_str else localdate()
+
+    userwise_sales=0
+    grand_total=0
+    if is_super_user(request):
+        # User-wise sales
+        userwise_sales = (
+            Invoice.objects
+            .annotate(invoice_day=TruncDate('invoice_date'))
+            .filter(invoice_day=selected_date)
+            .values('user__id', 'user__username')
+            .annotate(total_sales=Sum('total_amount'))
+            .order_by('-total_sales')
+        )
+
+
+
+        # Grand total for the day
+        grand_total = sum(row['total_sales'] or 0 for row in userwise_sales)
+
     context = {
         "customer": customer,
         "point_entries": point_entries,
-        "is_staff": is_staff
+        "is_staff": is_staff,
+        "selected_date": selected_date,
+        "userwise_sales": userwise_sales,
+        "grand_total": grand_total,
+        "is_super_user": is_super_user(request)
     }
     return render(request, 'home.html', context)

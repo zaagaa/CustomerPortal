@@ -121,6 +121,7 @@ USE_TZ = True
 
 # === Static files (CSS, JS, Images) ===
 
+AUTH_USER_MODEL = 'dashboard.User'
 
 # === Default primary key field type ===
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
