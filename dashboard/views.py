@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db import connection
-from .models import Customer, Invoice, Profile
+from .models import Customer, Invoice, Profile, Setting
 from dashboard.sms import send_otp_sms
 from staff.utils import get_staff_by_mobile
 import random
@@ -137,9 +137,18 @@ def home(request):
     date_str = request.GET.get('date')
     selected_date = parse_date(date_str) if date_str else localdate()
 
+    app_sale_report_mobile_numbers=Setting.objects.filter(setting='app_sale_report_mobile_numbers').values_list('value', flat=True).first()
+
+    mobile = request.session.get('customer_mobile') or request.COOKIES.get('customer_mobile')
+
+    show_sale_report = False
+    if mobile and str(mobile) in [m.strip() for m in app_sale_report_mobile_numbers.split(',')]:
+        show_sale_report = True
+
+
     userwise_sales=0
     grand_total=0
-    if is_super_user(request):
+    if show_sale_report:
         # User-wise sales
         userwise_sales = (
             Invoice.objects
@@ -162,6 +171,6 @@ def home(request):
         "selected_date": selected_date,
         "userwise_sales": userwise_sales,
         "grand_total": grand_total,
-        "is_super_user": is_super_user(request)
+        "show_sale_report": show_sale_report
     }
     return render(request, 'home.html', context)
