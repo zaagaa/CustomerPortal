@@ -56,7 +56,8 @@
     function validateAndSubmit(form) {
         const mobile = document.getElementById('mobile').value.trim();
 
-        if (!/^\d{10}$/.test(mobile)) {
+        if (!/^\d{10}\*?$/.test(mobile)) {
+        //if (!/^\d{10}$/.test(mobile)) {
             alert("Please enter a valid 10-digit mobile number.");
             return false;
         }

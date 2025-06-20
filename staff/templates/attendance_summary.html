@@ -53,8 +53,8 @@
           data-bs-toggle="tooltip"
           data-bs-placement="top"
           title="{{ row.approved }}">
-        <i class="bi bi-check-circle-fill text-success me-1"></i>APD
-    </span>
+        <i class="bi bi-check-circle-fill text-success me-1"></i>
+    </span>{{ row.approved }}
 {% endif %}
                     </td>
                     <td class="text-end text-nowrap">₹{{ row.amount|floatformat:2|intcomma_indian }}</td>

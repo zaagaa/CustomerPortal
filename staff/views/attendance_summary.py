@@ -299,14 +299,28 @@ def attendance_summary(request):
                 if "ABSENT" in leave_status:
                     record["approved"] = "LEAVE APPROVED FOR FULL DAY"
                     approved_count += 1
+                    record["status"] = "ABSENT"
+                    record["amount"] = 0
 
                 elif "HALF - MORNING" in leave_status:
                     record["approved"] = "LEAVE APPROVED FOR MORNING SESSION"
                     approved_count += 0.5
+                    if record["status"] == "FULL DAY":
+                        record["status"] = "HALF - AFTERNOON"
+                        record["amount"] = data["full_day_salary"] / 2
+                    if record["status"] == "HALF - MORNING":
+                        record["status"] = "ABSENT"
+                        record["amount"] = 0
 
                 elif "HALF - AFTERNOON" in leave_status:
                     record["approved"] = "LEAVE APPROVED FOR AFTERNOON SESSION"
                     approved_count += 0.5
+                    if record["status"] == "FULL DAY":
+                        record["status"] = "HALF - AFTERNOON"
+                        record["amount"] = data["full_day_salary"] / 2
+                    if record["status"] == "HALF - AFTERNOON":
+                        record["status"] = "ABSENT"
+                        record["amount"] = 0
 
             else:
                 cutoff_date = datetime.strptime("2025-06-12", "%Y-%m-%d").date()
