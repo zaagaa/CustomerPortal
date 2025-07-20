@@ -25,4 +25,4 @@ formatted_time = now.strftime("updated@%d/%m/%Y %I.%M %p")
 # Run Git commands
 run_git_command(['git', 'add', '.'])
 run_git_command(['git', 'commit', '-m', formatted_time])
-run_git_command(['git', 'push', 'origin', 'main'])
+run_git_command(['git', 'push', 'origin', 'client'])

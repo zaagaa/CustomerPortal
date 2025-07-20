@@ -1,0 +1,22 @@
+{% extends "layouts/staff_base.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">My Profile</h5>
+    </div>
+    <div class="card-body">
+        <p><strong>Name:</strong> {{ staff.staff_name }}</p>
+        <p><strong>Mobile:</strong> {{ staff.mobile }}</p>
+        <p><strong>Join Date:</strong> {{ staff.join_date }}</p>
+        <p><strong>Salary:</strong> ₹{{ staff.salary }}</p>
+        <p><strong>Company:</strong> {{ staff.company_id }}</p>
+        <p><strong>Aadhar:</strong> {{ staff.aadhar_number }}</p>
+        <p><strong>EPF No:</strong> {{ staff.epf_number }}</p>
+        <p><strong>ESI No:</strong> {{ staff.esi_number }}</p>
+        <p><strong>Remark:</strong> {{ staff.remark }}</p>
+    </div>
+</div>
+{% endblock %}

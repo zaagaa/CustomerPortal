@@ -47,7 +47,7 @@ print(f"📡 Using {INSTANCE_TYPE.upper()} database mode.")
 # === Quick-start development settings ===
 SECRET_KEY = 'django-insecure-n31&)l*b0w!(_xqm=zb372v9w61)!76i=*w5_o0dpn*1r&fz+j'
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # === Application definition ===
@@ -58,7 +58,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'CustomerPortal',
     'dashboard',
+'staff',
+    'sync'
 ]
 
 MIDDLEWARE = [
@@ -77,6 +80,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [],  # Add custom template paths here if needed
+        'DIRS': [BASE_DIR / 'staff' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -116,7 +120,19 @@ USE_TZ = True
 
 
 # === Static files (CSS, JS, Images) ===
-STATIC_URL = 'static/'
+
+AUTH_USER_MODEL = 'dashboard.User'
 
 # === Default primary key field type ===
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://customerportal-production.up.railway.app",
+'https://www.kurinjishopping.com',
+]
+
+
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / "static"]  # If you use a static folder for dev
+STATIC_ROOT = BASE_DIR / "staticfiles"   # Required for Railway
